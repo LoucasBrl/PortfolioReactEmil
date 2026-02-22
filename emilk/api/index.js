@@ -10,7 +10,7 @@ app.use(cors());
 
 // --- Configuration Google Drive ---
 
-// Fonction pour nettoyer la clé privée (gérer les sauts de ligne)
+// Fonction pour nettoyer la clé privée (gérer les sauts de ligne) - Maintenu pour compatibilité si on veut revenir au Service Account
 const getPrivateKey = () => {
     const key = process.env.GOOGLE_PRIVATE_KEY;
     if (!key) return null;
@@ -20,26 +20,28 @@ const getPrivateKey = () => {
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 
 async function getDriveClient() {
+    // 1. Essayer avec une clé API (Plus simple pour les dossiers publics)
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (apiKey) {
+        return google.drive({ version: 'v3', auth: apiKey });
+    }
+
+    // 2. Sinon, essayer avec un Service Account (Ancienne méthode)
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
     const privateKey = getPrivateKey();
 
-    if (!clientEmail || !privateKey) {
-        throw new Error("Credentials Google manquants (GOOGLE_CLIENT_EMAIL ou GOOGLE_PRIVATE_KEY)");
+    if (clientEmail && privateKey) {
+        const auth = new google.auth.JWT(
+            clientEmail,
+            null,
+            privateKey,
+            SCOPES
+        );
+        await auth.authorize();
+        return google.drive({ version: 'v3', auth });
     }
 
-    const auth = new google.auth.JWT(
-        clientEmail,
-        null,
-        privateKey,
-        SCOPES
-    );
-
-    // Initialisation
-    await auth.authorize();
-    
-    // Le client sera utilisé pour les requêtes
-    const drive = google.drive({ version: 'v3', auth });
-    return drive;
+    throw new Error("Credentials Google manquants. Définissez GOOGLE_API_KEY (recommandé pour dossier public) ou GOOGLE_CLIENT_EMAIL + GOOGLE_PRIVATE_KEY.");
 }
 
 // --- Routes API ---
@@ -71,20 +73,18 @@ app.get("/api/gallery", async (req, res) => {
 
         // Transformer les données pour le frontend
         const images = files.map(file => {
-            // Astuce : thumbnailLink renvoie par défaut une petite image (=s220).
-            // On remplace pour avoir une haute résolution.
-            let highResImage = null;
-            if (file.thumbnailLink) {
-                 // Remplace =s220 par =s1920 pour avoir une grande image
-                 highResImage = file.thumbnailLink.replace(/=s\d+$/, "=s1920");
-            }
+            // Pour être sûr, on utilise le lien 'uc' (Universal Content) qui redirige souvent vers le bon contenu
+            // ou alors on reprend le thumbnailLink fourni par l'API s'il existe et est valide.
             
+            // Tentative 3 : Lien d'export "view" standard qui marche bien pour les fichiers publics
+            const directLink = `https://drive.google.com/uc?export=view&id=${file.id}`;
+
             return {
                 id: file.id,
-                src: highResImage || file.webContentLink,
+                src: directLink,
                 caption: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "), // Nom sans extension
                 description: file.description || "",
-                width: 0, // Sera calculé par le frontend ou masonry
+                width: 0, 
                 height: 0
             };
         });

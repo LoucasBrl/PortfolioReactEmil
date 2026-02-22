@@ -19,7 +19,7 @@ function CoffeeMap() {
                 {/* Filtre Sépia/Contrast pour styliser la map */}
                 <div className="w-full h-full filter sepia-[.3] contrast-[1.1] grayscale-[0.2] group-hover:filter-none transition-all duration-700">
                     <iframe 
-                        src="https://www.google.com/maps/d/u/0/edit?mid=1eH_qJ0pMcbFt4y0-diRdPd1a3gW2nf4&usp=sharing" 
+                        src="https://www.google.com/maps/d/u/0/embed?mid=1eH_qJ0pMcbFt4y0-diRdPd1a3gW2nf4&ehbc=2E312F" 
                         width="100%" 
                         height="100%" 
                         style={{border:0}} 
