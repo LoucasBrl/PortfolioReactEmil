@@ -1,12 +1,21 @@
 @import "tailwindcss";
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Coffee Brutalism Theme */
+  --bg-color: #F4F1EA; /* Creamy off-white paper texture feel */
+  --text-color: #0A0A0A; /* Ink black */
+  --accent-coffee: #2C1810; /* Dark Roast */
+  --accent-rust: #C04D25; /* Dried Berry / Rust */
+  --accent-matcha: #6A7F48; /* Matcha Powder */
+  --border-width: 3px;
+  
+  font-family: 'League Spartan', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: var(--text-color);
+  background-color: var(--bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,42 +23,50 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  place-items: center; /* Note: might want to remove this for full page scroll layouts */
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  overflow-x: hidden;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Brutalist Utilities */
+.brutalist-border {
+  border: var(--border-width) solid var(--text-color);
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+.brutalist-shadow {
+  box-shadow: 6px 6px 0px var(--text-color);
 }
-button:hover {
-  border-color: #646cff;
+
+.brutalist-button {
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: var(--border-width) solid var(--text-color);
+  padding: 0.8rem 2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
+
+.brutalist-button:hover {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transform: translate(-4px, -4px);
+  box-shadow: 6px 6px 0px var(--accent-rust);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'League Spartan', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+}
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;

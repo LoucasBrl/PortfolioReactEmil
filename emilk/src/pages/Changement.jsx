@@ -96,61 +96,102 @@ function Galleries() {
     };
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#EBE4DF] p-8">
-        <h1 className="text-4xl font-league-spartan mb-8 text-[#815F47]">Gestion des images</h1>
-        {/* Champ d'ajout d'image */}
-        <form onSubmit={handleUpload} className="flex flex-col md:flex-row items-center gap-4 mb-8 bg-white rounded-xl shadow p-4 w-full max-w-2xl">
-          <select value={uploadType} onChange={e => setUploadType(e.target.value)} className="border rounded px-3 py-2 text-[#815F47] focus:outline-none focus:ring-2 focus:ring-[#D5B16C]">
-            <option value="cafe">Café</option>
-            <option value="matcha">Matcha</option>
-            <option value="latte">Latte</option>
-          </select>
-          <input type="file" accept="image/*" onChange={e => setUploadFile(e.target.files[0])} className="border rounded px-3 py-2 text-[#815F47] focus:outline-none focus:ring-2 focus:ring-[#D5B16C]" />
-          <input type="text" placeholder="Nom du fichier (optionnel)" value={uploadName} onChange={e => setUploadName(e.target.value)} className="border rounded px-3 py-2 text-[#815F47] focus:outline-none focus:ring-2 focus:ring-[#D5B16C]" />
-          <button type="submit" className="bg-[#815F47] text-[#111111] px-4 py-2 rounded hover:bg-[#a07a5a] transition">Ajouter</button>
-          {uploadMsg && <span className="text-sm text-[#815F47] ml-2">{uploadMsg}</span>}
-        </form>
-        {/* Grilles d'images */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-          {/* Café */}
-          <div className="bg-[#D5B16C] rounded-xl shadow p-4 flex flex-col items-center">
-            <h2 className="text-2xl font-league-spartan mb-4 text-[#815F47]">Café</h2>
-            <div className="flex flex-col gap-4 w-full">
-              {cafeImg.map((img) => (
-                <div className="flex flex-col items-center bg-white rounded-lg shadow p-2" key={img.id}>
-                  <img src={img.src} alt={img.alt} className="w-full h-48 object-cover rounded mb-2 border-2 border-[#D5B16C]" />
-                  <p className="text-[#815F47] font-semibold">{img.caption}</p>
-                  <button onClick={() => handleDelete('cafe', img.src.split('/').pop())} className="mt-2 px-4 py-1 bg-[#815F47] text-[#EBE4DF] rounded hover:bg-[#a07a5a] transition">Supprimer</button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#EAE8E3] p-8 font-league-spartan">
+        <h1 className="text-4xl md:text-6xl font-black mb-8 text-black uppercase border-b-4 border-[#C04D25] pb-2">Admin - Gestion</h1>
+        
+        {/* Upload Section */}
+        <div className="bg-white p-8 border-4 border-black shadow-[8px_8px_0px_0px_#2C1810] mb-12 w-full max-w-2xl">
+            <h2 className="text-2xl font-bold uppercase mb-4 border-b-2 border-black pb-2">Ajouter une Photo (Old API)</h2>
+            <form onSubmit={handleUpload} className="flex flex-col gap-4">
+                <div className="flex gap-4">
+                    <select 
+                        value={uploadType} 
+                        onChange={(e) => setUploadType(e.target.value)}
+                        className="border-2 border-black p-2 bg-[#EAE8E3] font-bold"
+                    >
+                        <option value="cafe">Café</option>
+                        <option value="matcha">Matcha</option>
+                        <option value="latte">Latte</option>
+                    </select>
+                    <input 
+                        type="file" 
+                        onChange={(e) => setUploadFile(e.target.files[0])}
+                        className="border-2 border-black p-2 w-full file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-[#C04D25]"
+                    />
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Matcha */}
-          <div className="bg-[#B7D7A8] rounded-xl shadow p-4 flex flex-col items-center">
-            <h2 className="text-2xl font-league-spartan mb-4 text-[#4B6F44]">Matcha</h2>
-            <div className="flex flex-col gap-4 w-full">
-              {matchaImg.map((img) => (
-                <div className="flex flex-col items-center bg-white rounded-lg shadow p-2" key={img.id}>
-                  <img src={img.src} alt={img.alt} className="w-full h-48 object-cover rounded mb-2 border-2 border-[#B7D7A8]" />
-                  <p className="text-[#4B6F44] font-semibold">{img.caption}</p>
-                  <button onClick={() => handleDelete('matcha', img.src.split('/').pop())} className="mt-2 px-4 py-1 bg-[#4B6F44] text-[#EBE4DF] rounded hover:bg-[#7fa97b] transition">Supprimer</button>
+                <input 
+                    type="text" 
+                    placeholder="Nom du fichier (optionnel, sans extension)" 
+                    value={uploadName} 
+                    onChange={(e) => setUploadName(e.target.value)}
+                    className="border-2 border-black p-2 font-mono"
+                />
+                <button type="submit" className="bg-black text-[#EAE8E3] font-bold uppercase py-3 hover:bg-[#C04D25] hover:shadow-[4px_4px_0px_0px_black] transition-all">
+                    Envoyer
+                </button>
+            </form>
+            <p className="mt-4 font-bold text-[#C04D25]">{uploadMsg}</p>
+        </div>
+
+        {/* Existing Images */}
+        <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+             {/* Café Section */}
+             <div className="border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_black]">
+                <h2 className="text-2xl font-black uppercase mb-4 text-center bg-black text-white py-1">Café</h2>
+                <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {cafeImg.map((img) => (
+                        <div key={img.id} className="flex justify-between items-center border-b-2 border-[#EAE8E3] pb-2">
+                             <div className="flex items-center gap-2 overflow-hidden">
+                                <img src={img.src} className="w-8 h-8 object-cover border border-black" />
+                                <span className="font-mono text-xs truncate">{img.src.split('/').pop()}</span>
+                             </div>
+                            <button 
+                                onClick={() => handleDelete('cafe', img.src.split('/').pop())}
+                                className="bg-[#C04D25] text-white px-2 py-1 text-xs font-bold uppercase hover:bg-black"
+                            >Delete</button>
+                        </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Latte */}
-          <div className="bg-[#F7E7CE] rounded-xl shadow p-4 flex flex-col items-center">
-            <h2 className="text-2xl font-league-spartan mb-4 text-[#C2A477]">Latte</h2>
-            <div className="flex flex-col gap-4 w-full">
-              {latteImg.map((img) => (
-                <div className="flex flex-col items-center bg-white rounded-lg shadow p-2" key={img.id}>
-                  <img src={img.src} alt={img.alt} className="w-full h-48 object-cover rounded mb-2 border-2 border-[#F7E7CE]" />
-                  <p className="text-[#C2A477] font-semibold">{img.caption}</p>
-                  <button onClick={() => handleDelete('latte', img.src.split('/').pop())} className="mt-2 px-4 py-1 bg-[#C2A477] text-[#EBE4DF] rounded hover:bg-[#e2cfa2] transition">Supprimer</button>
+             </div>
+
+             {/* Matcha Section */}
+             <div className="border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#6A7F48]">
+                <h2 className="text-2xl font-black uppercase mb-4 text-center bg-[#6A7F48] text-white py-1">Matcha</h2>
+                 <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {matchaImg.map((img) => (
+                        <div key={img.id} className="flex justify-between items-center border-b-2 border-[#EAE8E3] pb-2">
+                             <div className="flex items-center gap-2 overflow-hidden">
+                                <img src={img.src} className="w-8 h-8 object-cover border border-black" />
+                                <span className="font-mono text-xs truncate">{img.src.split('/').pop()}</span>
+                             </div>
+                            <button 
+                                onClick={() => handleDelete('matcha', img.src.split('/').pop())}
+                                className="bg-[#C04D25] text-white px-2 py-1 text-xs font-bold uppercase hover:bg-black"
+                            >Delete</button>
+                        </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          </div>
+             </div>
+             
+             {/* Latte Section */}
+             <div className="border-4 border-black bg-white p-4 shadow-[8px_8px_0px_0px_#2C1810]">
+                <h2 className="text-2xl font-black uppercase mb-4 text-center bg-[#2C1810] text-white py-1">Latte</h2>
+                 <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {latteImg.map((img) => (
+                        <div key={img.id} className="flex justify-between items-center border-b-2 border-[#EAE8E3] pb-2">
+                             <div className="flex items-center gap-2 overflow-hidden">
+                                <img src={img.src} className="w-8 h-8 object-cover border border-black" />
+                                <span className="font-mono text-xs truncate">{img.src.split('/').pop()}</span>
+                             </div>
+                            <button 
+                                onClick={() => handleDelete('latte', img.src.split('/').pop())}
+                                className="bg-[#C04D25] text-white px-2 py-1 text-xs font-bold uppercase hover:bg-black"
+                            >Delete</button>
+                        </div>
+                    ))}
+                </div>
+             </div>
+
         </div>
       </div>
     );

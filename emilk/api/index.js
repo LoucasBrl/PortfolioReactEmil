@@ -2,96 +2,111 @@
 import express from "express";
 import serverless from "serverless-http";
 import cors from "cors";
+import { google } from "googleapis";
 import process from "process";
-import formidable from "formidable-serverless";
-import heicConvert from "heic-convert";
-import { createClient } from "@supabase/supabase-js";
-import { Buffer } from "buffer";
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = express();
 app.use(cors());
 
-// Types valides
-const validTypes = ["cafe", "matcha", "latte"];
+// --- Configuration Google Drive ---
 
-// 📌 GET /api/gallery/:type → liste les images
-app.get("/api/gallery/:type", async (req, res) => {
-  const { type } = req.params;
-  if (!validTypes.includes(type)) {
-    return res.status(400).json({ error: "Invalid gallery type" });
-  }
+// Fonction pour nettoyer la clé privée (gérer les sauts de ligne)
+const getPrivateKey = () => {
+    const key = process.env.GOOGLE_PRIVATE_KEY;
+    if (!key) return null;
+    return key.replace(/\\n/g, '\n');
+};
 
-  const { data, error } = await supabase.storage.from("Gallery").list(type);
-  if (error) return res.status(500).json({ error: error.message });
+const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
 
-  const images = data.map((f, i) => ({
-    id: `${type}-img-${i}`,
-    alt: `${type} ${i + 1}`,
-    caption: f.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "),
-    src: `${SUPABASE_URL}/storage/v1/object/public/Gallery/${type}/${f.name}`,
-  }));
+async function getDriveClient() {
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = getPrivateKey();
 
-  res.json(images);
-});
-
-// 📌 POST /api/gallery/:type/upload → upload une image
-app.post("/api/gallery/:type/upload", (req, res) => {
-  const { type } = req.params;
-  if (!validTypes.includes(type)) {
-    return res.status(400).json({ error: "Invalid gallery type" });
-  }
-
-  const form = formidable({ multiples: false });
-  form.parse(req, async (err, fields, files) => {
-    if (err || !files.image) {
-      return res.status(400).json({ error: "No file uploaded" });
+    if (!clientEmail || !privateKey) {
+        throw new Error("Credentials Google manquants (GOOGLE_CLIENT_EMAIL ou GOOGLE_PRIVATE_KEY)");
     }
 
-    let file = files.image;
-    let buffer = file._writeStream ? null : await file.arrayBuffer?.();
+    const auth = new google.auth.JWT(
+        clientEmail,
+        null,
+        privateKey,
+        SCOPES
+    );
 
-    // Récupère le nom original
-    let filename = file.originalFilename || file.name;
+    // Initialisation
+    await auth.authorize();
+    
+    // Le client sera utilisé pour les requêtes
+    const drive = google.drive({ version: 'v3', auth });
+    return drive;
+}
 
-    // Convert HEIC en JPG si besoin
-    if (filename.toLowerCase().endsWith(".heic")) {
-      buffer = await heicConvert({
-        buffer: Buffer.from(buffer),
-        format: "JPEG",
-        quality: 1,
-      });
-      filename = filename.replace(/\.heic$/i, ".jpg");
+// --- Routes API ---
+
+app.get("/api/gallery", async (req, res) => {
+    try {
+        const folderId = process.env.GOOGLE_FOLDER_ID;
+        if (!folderId) {
+            console.error("GOOGLE_FOLDER_ID manquant");
+            res.status(500).json({ error: "Configuration serveur incomplète (Folder ID)" });
+            return;
+        }
+
+        const drive = await getDriveClient();
+
+        // Lister les fichiers du dossier
+        const response = await drive.files.list({
+            q: `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`,
+            fields: 'files(id, name, thumbnailLink, webContentLink, mimeType, description)',
+            orderBy: 'createdTime desc', // Plus récents en premier
+            pageSize: 100 
+        });
+
+        const files = response.data.files;
+        if (!files || files.length === 0) {
+           res.json([]);
+           return;
+        }
+
+        // Transformer les données pour le frontend
+        const images = files.map(file => {
+            // Astuce : thumbnailLink renvoie par défaut une petite image (=s220).
+            // On remplace pour avoir une haute résolution.
+            let highResImage = null;
+            if (file.thumbnailLink) {
+                 // Remplace =s220 par =s1920 pour avoir une grande image
+                 highResImage = file.thumbnailLink.replace(/=s\d+$/, "=s1920");
+            }
+            
+            return {
+                id: file.id,
+                src: highResImage || file.webContentLink,
+                caption: file.name.replace(/\.[^/.]+$/, "").replace(/_/g, " "), // Nom sans extension
+                description: file.description || "",
+                width: 0, // Sera calculé par le frontend ou masonry
+                height: 0
+            };
+        });
+
+        res.json(images);
+
+    } catch (error) {
+        console.error("Erreur API Drive:", error);
+        res.status(500).json({ error: "Erreur lors de la récupération des images", details: error.message });
     }
-
-    // Upload vers Supabase
-    const { error: uploadError } = await supabase.storage
-      .from("Gallery")
-      .upload(`${type}/${filename}`, Buffer.from(buffer), { upsert: true });
-
-    if (uploadError) return res.status(500).json({ error: uploadError.message });
-    res.json({ success: true, filename });
-  });
 });
 
-// 📌 DELETE /api/gallery/:type/delete/:filename → supprime une image
-app.delete("/api/gallery/:type/delete/:filename", async (req, res) => {
-  const { type, filename } = req.params;
-  if (!validTypes.includes(type)) {
-    return res.status(400).json({ error: "Invalid gallery type" });
-  }
-  if (!filename) {
-    return res.status(400).json({ error: "No filename provided" });
-  }
-
-  const { error } = await supabase.storage.from("Gallery").remove([`${type}/${filename}`]);
-  if (error) return res.status(500).json({ error: error.message });
-
-  res.json({ success: true });
+// Route de test simple
+app.get("/api/test", (req, res) => {
+    res.json({ status: "OK", message: "API is running" });
 });
 
-// ⚡ Export en serverless handler
-export default serverless(app);
+// En production serverless, on exporte le handler
+// En development (node api/dev-server.js), on exporte l'app express
+const handler = serverless(app);
+
+// Pour permettre l'import dans dev-server.js tout en gardant la compat serverless
+app.handler = handler;
+export default app;
+export { handler };

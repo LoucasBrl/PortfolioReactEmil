@@ -17,6 +17,7 @@
     "express": "^5.1.0",
     "formidable-serverless": "^1.1.1",
     "framer-motion": "^12.17.0",
+    "googleapis": "^171.4.0",
     "heic-convert": "^2.1.0",
     "i18next": "^25.3.4",
     "i18next-browser-languagedetector": "^8.2.0",

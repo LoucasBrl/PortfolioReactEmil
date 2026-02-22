@@ -15,20 +15,20 @@ function Galleries() {
               <AnimatedText text={t("galleries.title")} />
             </h1>
           </div>
-          <div className="w-full h-[60%] flex">
-            <Link to="/gallery/cafe" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-[100%]">
+          <div className="w-full  h-auto md:h-[60%] grow md:grow-0 flex flex-col md:flex-row pb-10 md:pb-0">
+            <Link to="/gallery/cafe" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-full w-full">
               <GalleryCard
                 title={t("galleries.specialty")}
                 background={"./cafespe.jpeg"}
               />
             </Link>
-            <Link to="/gallery/matcha" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-[100%]">
+            <Link to="/gallery/matcha" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-full w-full">
               <GalleryCard
                 title={t("galleries.matcha")}
                 background={"./matcha.jpeg"}
               />
             </Link>
-            <Link to="/gallery/latte" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-[100%]">
+            <Link to="/gallery/latte" className="hover:flex-[2] flex-1 transition-[flex-grow] duration-400 ease-in-out h-full w-full">
               <GalleryCard
                 title={t("galleries.latte")}
                 background={"./latte.jpeg"}
